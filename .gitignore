@@ -1,0 +1,4 @@
+.history/
+*.log
+.env
+.current_ip

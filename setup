@@ -1,0 +1,22 @@
+#!/bin/bash
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+cd "$DIR"
+
+echo "Welcome to the setup for this simple DNS changer for AWS Route 53."
+echo "Please enter the Route 53 Zone ID you wish to update."
+read zone
+echo "Please enter the Route 53 A Record Name that you wish to update."
+read name
+
+echo "Now saving those values to the local .env file."
+
+echo "" >> .env
+echo "# added from setup script on $(date)" >> .env
+echo "export AWS_ROUTE53_ZONE_ID=$zone" >> .env
+echo "export AWS_ROUTE53_RECORD_NAME=$name" >> .env
+
+echo "Now adding crontab to update IP on boot."
+
+crontab="@reboot $DIR/run >> $DIR/run.log 2>&1"
+echo "$(echo "$crontab" ; crontab -l)" | crontab -
