@@ -1,0 +1,21 @@
+#!/bin/bash
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+cd "$DIR"
+
+source .env
+
+ip=$(/usr/bin/dig +short myip.opendns.com @resolver1.opendns.com)
+if [ -e .current_ip ] && [ $(cat .current_ip) = $ip ]; then
+  echo "$(date) -- Current IP $ip is the same!"
+  exit 0
+fi
+
+zone=$AWS_ROUTE53_ZONE_ID
+name=$AWS_ROUTE53_RECORD_NAME
+/usr/local/bin/aws route53 change-resource-record-sets \
+  --hosted-zone-id $zone \
+  --change-batch "{ \"Changes\": [ { \"Action\": \"UPSERT\", \"ResourceRecordSet\": { \"Name\": \"${name}\", \"Type\": \"A\", \"TTL\": 60, \"ResourceRecords\": [ { \"Value\": \"${ip}\" } ] } } ] }" \
+  | cat
+printf "$ip" > ./.current_ip
+echo "$(date) -- Changed A record for Zone ${zone} Host ${name} to ${ip}"
